@@ -1,10 +1,11 @@
 import express, { Request, Response } from "express";
+import { userRoute } from "./modules/users/users.route";
+import { initDb } from "./database/db";
 
+initDb();
 const app = express();
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, World!");
-});
+app.use("/api/v1/users", userRoute);
 
 app.listen(3000, () => {
   console.log(`Server is running on port 3000`);

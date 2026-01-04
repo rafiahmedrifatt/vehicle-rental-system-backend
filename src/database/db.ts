@@ -1,44 +1,51 @@
 import { Pool } from "pg";
 
-const pool = new Pool({
+export const pool = new Pool({
   connectionString:
     "postgresql://neondb_owner:npg_DsLtQT6n2bEN@ep-square-pine-a8ra4yko-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require",
 });
 
-const initDb = async () => {
+export const initDb = async () => {
   try {
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            phone VARCHAR(20) UNIQUE NOT NULL,
-            role VARCHAR(10) NOT NULL DEFAULT 'user'
-        );
+      CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL CHECK (length(password) >= 6),
+      phone VARCHAR(20) NOT NULL,
+      role VARCHAR(10) NOT NULL CHECK (role IN ('admin', 'customer'))
+    );
+
     `);
 
-    pool.query(`
-        CREATE TABLE IF NOT EXISTS vehicles (
-            id SERIAL PRIMARY KEY,
-            vehicle_name VARCHAR(255) NOT NULL,
-            type 'car' | 'bike' | 'van' | 'SUV' NOT NULL,
-            registration_number UNIQUE NOT NULL,
-            daily_rental_price NUMERIC(10, 2) NOT NULL,
-            availability_status 'available' | 'booked' NOT NULL
-        );
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS vehicles (
+        id SERIAL PRIMARY KEY,
+        vehicle_name VARCHAR(255) NOT NULL,
+        type VARCHAR(10) NOT NULL
+          CHECK (type IN ('car', 'bike', 'van', 'SUV')),
+        registration_number VARCHAR(100) NOT NULL UNIQUE,
+        daily_rent_price NUMERIC(10,2) NOT NULL CHECK (daily_rent_price > 0),
+        availability_status VARCHAR(10) NOT NULL
+          CHECK (availability_status IN ('available', 'booked'))
+      );
+
     `);
 
-    pool.query(`
-        CREATE TABLE IF NOT EXISTS bookings (
-            id SERIAL PRIMARY KEY,
-            customer_id INTEGER REFERENCES users(id),
-            vehicle_id INTEGER REFERENCES vehicles(id),
-            rental_start_date DATE NOT NULL,
-            rental_end_date DATE NOT NULL,
-            total_price NUMERIC(10, 2) NOT NULL,
-            booking_status 'active' | 'cancelled' | 'returned' NOT NULL
-        );
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bookings (
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER NOT NULL REFERENCES users(id),
+        vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
+        rent_start_date DATE NOT NULL,
+        rent_end_date DATE NOT NULL,
+        total_price NUMERIC(10,2) NOT NULL CHECK (total_price > 0),
+        status VARCHAR(10) NOT NULL
+          CHECK (status IN ('active', 'cancelled', 'returned')),
+        CHECK (rent_end_date > rent_start_date)
+      );
+
             
         `);
   } catch (error) {
