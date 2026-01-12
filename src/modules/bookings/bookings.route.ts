@@ -5,12 +5,12 @@ const router = Router();
 
 router.post("/", bookingsController.createdBookings);
 
-router.get("/", bookingsController.getBookings);
+// router.get("/", bookingsController.getBookings);
 
-router.put(
-  "/:bookingId",
+// router.put(
+//   "/:bookingId",
 
-  bookingsController.UpdatedBookings
-);
+//   bookingsController.UpdatedBookings
+// );
 
 export const bookingRoute = router;
