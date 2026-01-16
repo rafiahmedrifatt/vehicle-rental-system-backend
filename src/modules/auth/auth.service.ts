@@ -1,4 +1,4 @@
-import { jwt } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { pool } from "../../config/db";
 import config from "../../config";
@@ -33,7 +33,7 @@ const loginUser = async (email: string, password: string) => {
 
   console.log({ result });
   if (result.rows.length === 0) {
-    return null;
+    throw new Error("User not found");
   }
   const user = result.rows[0];
 
@@ -41,7 +41,7 @@ const loginUser = async (email: string, password: string) => {
 
   console.log({ match, user });
   if (!match) {
-    return false;
+    throw new Error("Invalid credentials");
   }
 
   const token = jwt.sign(
@@ -51,11 +51,12 @@ const loginUser = async (email: string, password: string) => {
       expiresIn: "7d",
     }
   );
-  console.log({ token });
+  delete user.password;
 
   return { token, user };
 };
 
 export const authService = {
   signup,
+  loginUser,
 };
